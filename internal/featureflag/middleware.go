@@ -58,6 +58,11 @@ func (f *flagSetFetcher) evaluateForActor(ctx context.Context, a *actor.Actor, f
 	return flag, err
 }
 
+// EvaluateForActorFromContext evaluates value for the flag name passed
+// for the actor from the context. It requires the context to be wrapped
+// with *WithFlags*, otherwise it will return false by default. It also
+// set the evaluated flags to redis cache which later can be used to pass
+// feature flags context to event logs.
 func EvaluateForActorFromContext(ctx context.Context, flagName string) (result bool) {
 	result = false
 	if flags := ctx.Value(flagContextKey{}); flags != nil {
@@ -68,6 +73,9 @@ func EvaluateForActorFromContext(ctx context.Context, flagName string) (result b
 	return result
 }
 
+// FromContext returns a map of already evaluated flags and their values
+// for the actor from the context. It required the context to be wrapped
+// with *WithFlags*, otherwise it will return an empty map by default.
 func FromContext(ctx context.Context) FlagSet {
 	if flags := ctx.Value(flagContextKey{}); flags != nil {
 		if f, err := flags.(*flagSetFetcher).ffs.GetFeatureFlags(ctx); err == nil {
