@@ -68,7 +68,7 @@ func EvaluateForActorFromContext(ctx context.Context, flagName string) (result b
 	return result
 }
 
-func GetEvaluatedFlagsFromContext(ctx context.Context) FlagSet {
+func FromContext(ctx context.Context) FlagSet {
 	if flags := ctx.Value(flagContextKey{}); flags != nil {
 		if f, err := flags.(*flagSetFetcher).ffs.GetFeatureFlags(ctx); err == nil {
 			return getEvaluatedFlagSetFromCache(f, actor.FromContext(ctx))

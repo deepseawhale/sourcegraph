@@ -134,7 +134,7 @@ func (r *schemaResolver) EvaluateFeatureFlag(ctx context.Context, args *struct {
 }
 
 func (r *schemaResolver) EvaluatedFeatureFlags(ctx context.Context) []*EvaluatedFeatureFlagResolver {
-	f := featureflag.GetEvaluatedFlagsFromContext(ctx)
+	f := featureflag.FromContext(ctx)
 	return evaluatedFlagsToResolvers(f)
 }
 
