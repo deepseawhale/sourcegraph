@@ -5,13 +5,13 @@ import { MockedFeatureFlagsProvider } from './FeatureFlagsProvider'
 import { useFeatureFlag } from './useFeatureFlag'
 
 describe('useFeatureFlag', () => {
-    const enabledFlag = 'enabled-flag' as FeatureFlagName
-    const disabledFlag = 'disabled-flag' as FeatureFlagName
+    const ENABLED_FLAG = 'enabled-flag' as FeatureFlagName
+    const DISABLED_FLAG = 'disabled-flag' as FeatureFlagName
     const setup = (initialFlagName: FeatureFlagName, refetchInterval?: number) =>
         renderHook(({ flagName }) => useFeatureFlag(flagName), {
             wrapper: ({ children, overrides }) => (
                 <MockedFeatureFlagsProvider
-                    overrides={{ [enabledFlag]: true, ...overrides } as Record<FeatureFlagName, boolean>}
+                    overrides={{ [ENABLED_FLAG]: true, ...overrides } as Record<FeatureFlagName, boolean>}
                     refetchInterval={refetchInterval}
                 >
                     {children}
@@ -20,13 +20,13 @@ describe('useFeatureFlag', () => {
             initialProps: {
                 flagName: initialFlagName,
                 overrides: {
-                    [disabledFlag]: false,
+                    [DISABLED_FLAG]: false,
                 },
             },
         })
 
     it('returns [false] value correctly', async () => {
-        const state = setup(disabledFlag)
+        const state = setup(DISABLED_FLAG)
         // Initial state
         expect(state.result.current).toStrictEqual([false, 'initial', undefined])
 
@@ -36,7 +36,7 @@ describe('useFeatureFlag', () => {
     })
 
     it('returns [true] value correctly', async () => {
-        const state = setup(enabledFlag)
+        const state = setup(ENABLED_FLAG)
         // Initial state
         expect(state.result.current).toStrictEqual([false, 'initial', undefined])
 
@@ -47,7 +47,7 @@ describe('useFeatureFlag', () => {
     })
 
     it('updates on value change', async () => {
-        const state = setup(enabledFlag, 100)
+        const state = setup(ENABLED_FLAG, 100)
         // Initial state
         expect(state.result.current).toStrictEqual([false, 'initial', undefined])
 
@@ -56,13 +56,13 @@ describe('useFeatureFlag', () => {
         expect(state.result.current).toStrictEqual([true, 'loaded', undefined])
 
         // Rerender and wait for new state
-        state.rerender({ overrides: { [enabledFlag]: false }, flagName: enabledFlag })
+        state.rerender({ overrides: { [ENABLED_FLAG]: false }, flagName: ENABLED_FLAG })
         await state.waitForNextUpdate()
         expect(state.result.current).toStrictEqual([false, 'loaded', undefined])
     })
 
     it('updates when feature flag prop changes', async () => {
-        const state = setup(enabledFlag)
+        const state = setup(ENABLED_FLAG)
         // Initial state
         expect(state.result.all[0]).toStrictEqual([false, 'initial', undefined])
         // Loaded state
@@ -70,13 +70,13 @@ describe('useFeatureFlag', () => {
         expect(state.result.current).toStrictEqual([true, 'loaded', undefined])
 
         // Rerender and wait for new state
-        state.rerender({ overrides: {}, flagName: disabledFlag })
+        state.rerender({ overrides: {}, flagName: DISABLED_FLAG })
         await state.waitForNextUpdate()
         expect(state.result.current).toStrictEqual([false, 'loaded', undefined])
     })
 
     it('returns "error" when no context parent', () => {
-        const state = renderHook(() => useFeatureFlag(enabledFlag))
+        const state = renderHook(() => useFeatureFlag(ENABLED_FLAG))
         // Initial state
         expect(state.result.all[0]).toStrictEqual([false, 'initial', undefined])
         // Loaded state

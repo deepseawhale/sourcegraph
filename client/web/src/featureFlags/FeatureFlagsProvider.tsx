@@ -6,10 +6,10 @@ import { requestGraphQL } from '../backend/graphql'
 
 import { FeatureFlagName } from './featureFlags'
 import { removeFeatureFlagOverride, setFeatureFlagOverride } from './lib/feature-flag-local-overrides'
-import { FeatureFlagClient, IFeatureFlagClient } from './lib/FeatureFlagClient'
+import { FeatureFlagClient } from './lib/FeatureFlagClient'
 import { parseUrlOverrideFeatureFlags } from './lib/parseUrlOverrideFeatureFlags'
 
-export const FeatureFlagsContext = createContext<{ client?: IFeatureFlagClient }>({})
+export const FeatureFlagsContext = createContext<{ client?: FeatureFlagClient }>({})
 
 interface FeatureFlagsProviderProps {
     isLocalOverrideEnabled?: boolean
@@ -102,7 +102,7 @@ export const MockedFeatureFlagsProvider: React.FunctionComponent<MockedFeatureFl
     )
 
     useEffect(() => {
-        client.setRequestGraphQLFn(mockRequestGraphQL as typeof requestGraphQL)
+        client.setRequestGraphQLFunction(mockRequestGraphQL as typeof requestGraphQL)
     }, [client, mockRequestGraphQL])
 
     return <FeatureFlagsContext.Provider value={{ client }}>{children}</FeatureFlagsContext.Provider>

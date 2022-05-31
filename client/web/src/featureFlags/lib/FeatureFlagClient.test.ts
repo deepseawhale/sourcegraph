@@ -1,35 +1,32 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 import { combineLatest, of } from 'rxjs'
-import sinon from 'sinon'
+import sinon, { SinonSpy } from 'sinon'
 
+import { requestGraphQL } from '../../backend/graphql'
 import type { FeatureFlagName } from '../featureFlags'
 
 import { setFeatureFlagOverride } from './feature-flag-local-overrides'
 import { FeatureFlagClient } from './FeatureFlagClient'
 
-const enabledFlag = 'enabled-flag' as FeatureFlagName
-const disabledFlag = 'disabled-flag' as FeatureFlagName
 describe('FeatureFlagClient', () => {
+    const ENABLED_FLAG = 'enabled-flag' as FeatureFlagName
+    const DISABLED_FLAG = 'disabled-flag' as FeatureFlagName
+
     const mockRequestGraphQL = sinon.spy((query, variables) =>
-        of({ data: { evaluateFeatureFlag: [enabledFlag].includes(variables.flagName) } })
-    )
-    beforeEach(() => {
-        mockRequestGraphQL.resetHistory()
-        // remove local overrides
-        localStorage.clear()
-    })
+        of({ data: { evaluateFeatureFlag: [ENABLED_FLAG].includes(variables.flagName) }, errors: [] })
+    ) as typeof requestGraphQL & SinonSpy
+
+    beforeEach(() => mockRequestGraphQL.resetHistory())
+
     it('does not make initial API call ', () => {
-        // @ts-ignore
         new FeatureFlagClient(mockRequestGraphQL)
         sinon.assert.notCalled(mockRequestGraphQL)
     })
 
     it('returns [true] response from API call for feature flag evaluation', done => {
-        // @ts-ignore
         const client = new FeatureFlagClient(mockRequestGraphQL)
         expect.assertions(1)
 
-        client.get(enabledFlag).subscribe(value => {
+        client.get(ENABLED_FLAG).subscribe(value => {
             expect(value).toBe(true)
             sinon.assert.calledOnce(mockRequestGraphQL)
             done()
@@ -37,28 +34,26 @@ describe('FeatureFlagClient', () => {
     })
 
     it('returns [false] response from API call for feature flag evaluation', done => {
-        // @ts-ignore
         const client = new FeatureFlagClient(mockRequestGraphQL, 1000)
         expect.assertions(1)
 
-        client.get(disabledFlag).subscribe({
+        client.get(DISABLED_FLAG).subscribe({
             next: value => {
                 expect(value).toBe(false)
                 sinon.assert.calledOnce(mockRequestGraphQL)
                 done()
             },
             complete: () => {
-                throw new Error('Should not be completed when passing refetch interval')
+                throw new Error('Should not complete when passing refetch interval')
             },
         })
     })
 
     it('completes after single fall if no refetch interval passed', done => {
-        // @ts-ignore
         const client = new FeatureFlagClient(mockRequestGraphQL)
         expect.assertions(1)
 
-        client.get(enabledFlag).subscribe({
+        client.get(ENABLED_FLAG).subscribe({
             next: value => {
                 expect(value).toBe(true)
             },
@@ -70,11 +65,10 @@ describe('FeatureFlagClient', () => {
     })
 
     it('makes only single API call per feature flag evaluation', done => {
-        // @ts-ignore
         const client = new FeatureFlagClient(mockRequestGraphQL)
         expect.assertions(2)
 
-        combineLatest([client.get(enabledFlag), client.get(enabledFlag)]).subscribe(([value1, value2]) => {
+        combineLatest([client.get(ENABLED_FLAG), client.get(ENABLED_FLAG)]).subscribe(([value1, value2]) => {
             expect(value1).toBe(true)
             expect(value2).toBe(true)
             sinon.assert.calledOnce(mockRequestGraphQL)
@@ -86,14 +80,16 @@ describe('FeatureFlagClient', () => {
         let index = -1
         const mockRequestGraphQL = sinon.spy((query, variables) => {
             index++
-            return of({ data: { evaluateFeatureFlag: [enabledFlag].includes(variables.flagName) && index === 0 } })
-        })
+            return of({
+                data: { evaluateFeatureFlag: [ENABLED_FLAG].includes(variables.flagName) && index === 0 },
+                errors: [],
+            })
+        }) as typeof requestGraphQL & SinonSpy
 
-        // @ts-ignore
         const client = new FeatureFlagClient(mockRequestGraphQL, 1)
         expect.assertions(2)
 
-        client.get(enabledFlag).subscribe(value => {
+        client.get(ENABLED_FLAG).subscribe(value => {
             if (index === 0) {
                 expect(value).toBe(true)
             } else {
@@ -104,14 +100,17 @@ describe('FeatureFlagClient', () => {
         })
     })
 
-    describe('local overrides', () => {
+    describe('local feature flag overrides', () => {
+        beforeEach(() => {
+            // remove local overrides
+            localStorage.clear()
+        })
         it('returns [false] override if it exists', done => {
-            // @ts-ignore
             const client = new FeatureFlagClient(mockRequestGraphQL)
-            setFeatureFlagOverride(enabledFlag, false)
+            setFeatureFlagOverride(ENABLED_FLAG, false)
             expect.assertions(1)
 
-            client.get(enabledFlag).subscribe(value => {
+            client.get(ENABLED_FLAG).subscribe(value => {
                 expect(value).toBe(false)
                 sinon.assert.calledOnce(mockRequestGraphQL)
                 done()
@@ -119,12 +118,11 @@ describe('FeatureFlagClient', () => {
         })
 
         it('returns [true] override if it exists', done => {
-            // @ts-ignore
             const client = new FeatureFlagClient(mockRequestGraphQL)
-            setFeatureFlagOverride(disabledFlag, true)
+            setFeatureFlagOverride(DISABLED_FLAG, true)
             expect.assertions(1)
 
-            client.get(disabledFlag).subscribe(value => {
+            client.get(DISABLED_FLAG).subscribe(value => {
                 expect(value).toBe(true)
                 sinon.assert.calledOnce(mockRequestGraphQL)
                 done()
@@ -132,13 +130,13 @@ describe('FeatureFlagClient', () => {
         })
 
         it('does not use non-boolean override', done => {
-            // @ts-ignore
             const client = new FeatureFlagClient(mockRequestGraphQL)
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
-            setFeatureFlagOverride(disabledFlag, 'something else')
+            setFeatureFlagOverride(DISABLED_FLAG, 'something else')
             expect.assertions(1)
 
-            client.get(disabledFlag).subscribe(value => {
+            client.get(DISABLED_FLAG).subscribe(value => {
                 expect(value).toBe(false)
                 sinon.assert.calledOnce(mockRequestGraphQL)
                 done()
