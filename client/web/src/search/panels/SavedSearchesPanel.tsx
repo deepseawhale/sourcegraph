@@ -1,12 +1,23 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState, KeyboardEvent } from 'react'
 
 import { gql } from '@apollo/client'
 import classNames from 'classnames'
 import PencilOutlineIcon from 'mdi-react/PencilOutlineIcon'
 import PlusIcon from 'mdi-react/PlusIcon'
+import { useHistory } from 'react-router'
 
 import { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
-import { Button, ButtonGroup, Link, Menu, MenuButton, MenuList, MenuItem, Icon } from '@sourcegraph/wildcard'
+import {
+    Button,
+    ButtonGroup,
+    Link,
+    Menu,
+    MenuButton,
+    MenuList,
+    MenuItem,
+    Icon,
+    ButtonLink,
+} from '@sourcegraph/wildcard'
 
 import { AuthenticatedUser } from '../../auth'
 import { SavedSearchesPanelFragment } from '../../graphql-operations'
@@ -52,6 +63,7 @@ export const SavedSearchesPanel: React.FunctionComponent<React.PropsWithChildren
     const savedSearches = savedSearchesFragment?.savedSearches ?? null
 
     const [showAllSearches, setShowAllSearches] = useState(true)
+    const history = useHistory()
 
     useEffect(() => {
         // Only log the first load (when items to load is equal to the page size)
@@ -68,22 +80,34 @@ export const SavedSearchesPanel: React.FunctionComponent<React.PropsWithChildren
         telemetryService,
     ])
 
+    const handleCreateSavedSearchKeyDown = useCallback(
+        (event: KeyboardEvent<HTMLButtonElement> | KeyboardEvent<HTMLAnchorElement>): void => {
+            const user = authenticatedUser?.username || ''
+            if (event.key === ' ' || event.key === 'Enter') {
+                history.push(`/users/${user}/searches/add`)
+
+                logEvent('SavedSearchesPanelCreateButtonClicked', { source: 'empty view' })
+            }
+        },
+        [authenticatedUser?.username, history, logEvent]
+    )
+
     const emptyDisplay = (
         <EmptyPanelContainer className="text-muted">
             <small>
                 Use saved searches to alert you to uses of a favorite API, or changes to code you need to monitor.
             </small>
             {authenticatedUser && (
-                <Button
+                <ButtonLink
                     to={`/users/${authenticatedUser.username}/searches/add`}
                     onClick={logEvent('SavedSearchesPanelCreateButtonClicked', { source: 'empty view' })}
                     className="mt-2 align-self-center"
                     variant="secondary"
-                    as={Link}
+                    onKeyDown={handleCreateSavedSearchKeyDown}
                 >
                     <Icon role="img" aria-hidden={true} as={PlusIcon} />
                     Create a saved search
-                </Button>
+                </ButtonLink>
             )}
         </EmptyPanelContainer>
     )
