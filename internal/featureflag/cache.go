@@ -59,11 +59,11 @@ func ClearFlagFromCache(name string) {
 
 func getVisitorIDForActor(a *actor.Actor) (string, error) {
 	if a.IsAuthenticated() {
-		return fmt.Sprintf("uid_%v", a.UID), nil
+		return fmt.Sprintf("uid_%d", a.UID), nil
 	} else if a.AnonymousUID != "" {
 		return "auid_" + a.AnonymousUID, nil
 	} else {
-		return "", errors.New("UID/AnonymousUID are emptry for the given actor.")
+		return "", errors.New("UID/AnonymousUID are empty for the given actor.")
 	}
 }
 
