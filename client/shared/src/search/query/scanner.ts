@@ -489,6 +489,9 @@ export const scanSearchQuery = (
         case SearchPatternType.structural:
             patternKind = PatternKind.Structural
             break
+        case SearchPatternType.lucky:
+            patternKind = PatternKind.Literal
+            break
     }
     const scanner = createScanner(patternKind, interpretComments)
     return scanner(query, 0)
